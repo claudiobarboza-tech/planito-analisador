@@ -1,0 +1,27 @@
+import os
+import functions_framework
+import google.generativeai as genai
+import json
+
+# Configurar chave API
+GOOGLE_API_KEY = os.getenv("AIzaSyBG3Mr7hkPb9cFMkNhrtqxR692icnnc0QM")
+genai.configure(api_key=GOOGLE_API_KEY)
+
+planito_prompt = """Seu prompt inteiro aqui..."""
+
+@functions_framework.http
+def analisar_pta(request):
+    try:
+        request_json = request.get_json(silent=True)
+        if not request_json or 'texto_pta' not in request_json:
+            return ('Erro: O campo "texto_pta" é necessário.', 400)
+
+        texto_pta = request_json['texto_pta']
+        prompt_completo = f"{planito_prompt}\n---\nAnalise o seguinte documento de PTA:\n{texto_pta}"
+
+        model = genai.GenerativeModel('gemini-1.5-pro-latest')
+        response = model.generate_content(prompt_completo)
+
+        return (response.text, 200, {'Content-Type': 'application/json'})
+    except Exception as e:
+        return (f"Ocorreu um erro na API: {str(e)}", 500)
